@@ -1,0 +1,12 @@
+# Ignore .NET stuff
+.vs/
+bin/
+obj/
+
+# Ignore Node stuff
+node_modules/
+dist/
+build/
+
+# Others
+.env
