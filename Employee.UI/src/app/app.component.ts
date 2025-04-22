@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { User } from './models/User';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -10,73 +11,50 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
-
-  public isNewUser: boolean = false;
-  userObj: User = new User();
-  userList:User[]=[];
-  localValue:string='user';
-
+http =inject(HttpClient)
+employeeList: any[]=[];
+employeeObj:any={
+    "employeeId":0 ,
+    "firstName": "",
+    "lastName": "",
+    "email": "",
+    "contactNo": "",
+    "city": "",
+    "address": ""
+}
   ngOnInit(): void {
-    const localData = localStorage.getItem(this.localValue);
-    if(localData)
-    {
-      this.userList = JSON.parse(localData);
-    }
+    this.getAllEmployee();
   }
 
-  changeUserStatus(isEditing:boolean=false) {
-    this.isNewUser = !this.isNewUser;
-    if(!isEditing)
-    {
-      this.userObj = new User();
-    }
-  }
-
-  onSave(){
-    this.userObj.userId=this.userList.length+1;
-    // if(this.userList.length==0)
-    // {
-      this.userList.push(this.userObj);
-    //}
-    this.userObj = new User();
-    this.fetchLocalStorage();
-    this.changeUserStatus();
-  }
-
-  onEdit(data:User)
+  public getAllEmployee()
   {
-    this.userObj={...data};
-    this.changeUserStatus(true);
+    this.http.get('https://localhost:7267/api/EmployeeMaster').subscribe((res:any)=>{
+      this.employeeList=res;
+    })
   }
 
-  onUpdate(){
-    const record= this.userList.find(x=>x.userId==this.userObj.userId);
-    if(record !=undefined)
-    {
-      record.fName=this.userObj.fName;
-      record.lName=this.userObj.lName;
-      record.uName=this.userObj.uName;
-      record.city=this.userObj.city;
-      record.zipCode=this.userObj.zipCode;
-      record.state=this.userObj.state;
-      record.isAgree=this.userObj.isAgree;
-    }
-    this.fetchLocalStorage();
-    this.changeUserStatus();
-  }
-
-  onDelete(userId:number)
+  public onSave()
   {
-    const isDelete=confirm('Are you sure you want to delete?');
+    this.http.post('https://localhost:7267/api/EmployeeMaster',this.employeeObj).subscribe((res:any)=>{
+      this.getAllEmployee();
+    })
+  }
+  public onEdit()
+  {
+    this.http.put('https://localhost:7267/api/EmployeeMaster'+this.employeeObj.employeeId, this.employeeObj).subscribe((res:any)=>{
+      this.getAllEmployee();
+    })
+  }
+  public onDelete(data:any)
+  {
+    const isDelete=confirm("Are you sure you want to delete this record?");
     if(isDelete)
-    {
-      const index=this.userList.findIndex(x=>x.userId==userId);
-      this.userList.splice(index,1);
-      this.fetchLocalStorage();
+      {
+      this.http.delete('https://localhost:7267/api/EmployeeMaster/'+data.employeeId).subscribe((res:any)=>{
+        this.getAllEmployee();
+      })
     }
   }
 
-  private fetchLocalStorage() {
-    localStorage.setItem(this.localValue, JSON.stringify(this.userList));
-  }
+
 }
